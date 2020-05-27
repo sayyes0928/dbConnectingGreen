@@ -1,8 +1,9 @@
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
@@ -14,8 +15,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
-public class Gui extends JFrame {
+public class Gui extends JFrame implements ActionListener {
 
 //	private String 메인화면_상품명_단가_제조사_조회화면_등록버튼_조회버튼_삭제버튼이_들어간_화면구성;
 //	private String 상품명;
@@ -27,7 +29,13 @@ public class Gui extends JFrame {
 //	void 삭제버튼_이벤트_JTable의값을_마우스로_선택하거나_관리번호로_조회해_텍스트피드에_값이있는_데이터를삭제_DAO메소드실행() {}
 
 	UserDAO userDAO = new UserDAO();
+	UserDTO userDTO = new UserDTO();
 	JTable table;
+	JComboBox<String> cb;
+
+	JTextField prNameTxt;
+	JTextField prPriceTxt;
+	JTextField prMakerTxt;
 	ArrayList<UserDTO> list = new ArrayList<>();
 
 	Gui() {
@@ -54,17 +62,28 @@ public class Gui extends JFrame {
 
 		// 텍스트필드
 		JPanel textJP = new JPanel(new GridLayout(4, 1));
-//		ArrayList<UserDTO> list = userDAO.showArray();
-//		Object[] row = new Object[1];
-//		for (int i = 0; i < list.size(); i++) {
-//			row[0] = list.get(i).getProbuctNum();
-//		}
-		String arr [] = {"1","2","3","4","5"};
-		
-		JComboBox<String> cb = new JComboBox<String>(arr); // 배열을 콤보박스로
-		JTextField prNameTxt = new JTextField();
-		JTextField prPriceTxt = new JTextField();
-		JTextField prMakerTxt = new JTextField();
+		//
+		ArrayList<Object[]> list = userDAO.showArray();
+		ArrayList<String> cblist = new ArrayList<>();
+		for (int i = 0; i < list.size(); i++) {
+			Object[] row = new Object[4];
+			row = list.get(i);
+
+			cblist.add((String) row[0]);
+		}
+
+		// arraylist를 배열로
+		String arr[] = new String[cblist.size()];
+		int size = 0;
+		for (String temp : cblist) {
+			arr[size++] = temp;
+		}
+		//
+		cb = new JComboBox<String>(arr); // 배열을 콤보박스로
+
+		prNameTxt = new JTextField();
+		prPriceTxt = new JTextField();
+		prMakerTxt = new JTextField();
 		textJP.add(cb);
 		textJP.add(prNameTxt);
 		textJP.add(prPriceTxt);
@@ -96,56 +115,85 @@ public class Gui extends JFrame {
 		table.setModel(new DefaultTableModel(new Object[][] {
 
 		}, new String[] { "관리번호", "상품명", "단가", "제조사" }));
-		DefaultTableModel model = (DefaultTableModel) table.getModel();
-		table.setModel(model);
+		
+	
+
 		showJP.add(new JScrollPane(table), BorderLayout.CENTER);
 
 		// 버튼 이벤트
-		inbtn.addActionListener(new ActionListener() {
+		// 등록버튼
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				String prName = prNameTxt.getText();
-				int prPrice = Integer.parseInt(prPriceTxt.getText());
-				String prMaker = prMakerTxt.getText();
-				userDAO.insert(prName, prPrice, prMaker);
-			}
-		});
-
-		schbtn.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				DefaultTableModel model = (DefaultTableModel) table.getModel();
-				model.setRowCount(0);
-				showUser();
-
-				userDAO.search(cb.getItemAt(cb.getSelectedIndex()));
-				prNameTxt.setText(userDAO.userDTO.getProductName());
-				prPriceTxt.setText(Integer.toString(userDAO.userDTO.getPrice()));
-				prMakerTxt.setText(userDAO.userDTO.getMaker());
-
-			}
-		});
-
+		inbtn.addActionListener(this);
+		schbtn.addActionListener(this);
+		delbtn.addActionListener(this);
 	}
 
 	//
 
-	//
+	public void showUser() { // DB내용 테이블로 보내기
 
-	public void showUser() {
-
-		ArrayList<UserDTO> list = userDAO.showArray();
+		ArrayList<Object[]> list = userDAO.showArray();
+		
 		DefaultTableModel model = (DefaultTableModel) table.getModel();
-		Object[] row = new Object[4];
+		
 		for (int i = 0; i < list.size(); i++) {
-			row[0] = list.get(i).getProbuctNum();
-			row[1] = list.get(i).getProductName();
-			row[2] = list.get(i).getPrice();
-			row[3] = list.get(i).getMaker();
+			Object[] row = new Object[4];
+			row = list.get(i);
 
 			model.addRow(row);
+
 		}
 	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+
+		if (e.getActionCommand().equals("등록")) {
+			insert();
+		} else if (e.getActionCommand().equals("조회")) {
+			search();
+		} else {
+			delete();
+		}
+	}
+
+	void insert() {
+
+		DefaultTableModel model = (DefaultTableModel) table.getModel();
+		model.setRowCount(0); // 테이블 모델 값 초기화
+		showUser();
+
+		userDTO.setProductName(prNameTxt.getText());
+		userDTO.setPrice(Integer.parseInt(prPriceTxt.getText()));
+		userDTO.setMaker(prMakerTxt.getText());
+
+		userDAO.insert(userDTO); // set으로 값이 담긴 객체를 매개변수로 담아서 넘긴다.
+
+		prNameTxt.setText("");
+		prPriceTxt.setText("");
+		prMakerTxt.setText("");
+	}
+
+	void search() {
+		DefaultTableModel model = (DefaultTableModel) table.getModel();
+		model.setRowCount(0); // 테이블 모델 값 초기화
+		showUser();
+
+		userDTO.setProductNum(cb.getItemAt(cb.getSelectedIndex()));
+		userDAO.search(userDTO); // 콤보박스 값 가져오기
+		prNameTxt.setText(userDAO.userDTO.getProductName());
+		prPriceTxt.setText(Integer.toString(userDAO.userDTO.getPrice()));
+		prMakerTxt.setText(userDAO.userDTO.getMaker());
+
+	}
+
+	void delete() {
+
+		userDTO.setProductNum(cb.getItemAt(cb.getSelectedIndex()));
+		userDAO.delete(userDTO);
+		DefaultTableModel model = (DefaultTableModel) table.getModel();
+		model.setRowCount(0);
+		showUser();
+	}
+
 }

@@ -24,7 +24,7 @@ public class UserDAO {
 	public UserDTO userDTO = new UserDTO();
 
 	static final String JD = "com.mysql.jdbc.Driver";
-	static final String DBURL = "jdbc:mysql://localhost/mydb";
+	static final String DBURL = "jdbc:mysql://localhost/mydb?serverTimezone=Asia/Seoul&useSSL=false";
 	static final String dbID = "root";
 	static final String dbPW = "root";
 
@@ -71,32 +71,30 @@ public class UserDAO {
 
 	}
 
-	public void insert(String productName, int productPrice, String productMaker) {
+	public void insert(UserDTO userdata) {//객체 자체(객체에 담긴 모든 내용)을 받아올 수 있다
 		connect();
 		try {
 			
 			String insert;
 			insert = "insert into product values(default,?,?,?)";
 			pstmt = conn.prepareStatement(insert);
-			pstmt.setString(1, productName);
-			pstmt.setInt(2, productPrice);
-			pstmt.setString(3, productMaker);
+			pstmt.setString(1, userdata.getProductName());
+			pstmt.setInt(2, userdata.getPrice());
+			pstmt.setString(3, userdata.getMaker());
 			pstmt.executeUpdate(); // database 에 valuse 를 update! //
 
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
+		}  catch (Exception e) {
 			// TODO: handle exception
 		} finally {
 			disconnect();
 		}
 	}
 
-	public void delete(String productNum) {
+	public void delete(UserDTO productNum) {
 		connect();
 		try {
 			String sqlDel;
-			sqlDel = "delete from product where number ='" + productNum + "'";
+			sqlDel = "delete from product where productNum ='" + productNum.getProductNum() + "'";
 			pstmt = conn.prepareStatement(sqlDel);
 			pstmt.executeUpdate(); // database 에 valuse 를 update! //
 		} catch (Exception e) {
@@ -123,16 +121,16 @@ public class UserDAO {
 //		}
 //	}
 
-	public void search(String productNum) { // 로그인 메소드
+	public void search(UserDTO productNum) { // 로그인 메소드
 		connect();
 		try {
 			stmt = conn.createStatement();
 			String sql;
-			sql = "select * from product where productNum = '" + productNum + "'"; // 내가 입력해준id 테이블값의 전체의
+			sql = "select * from product where productNum = '" + productNum.getProductNum() + "'"; // 내가 입력해준id 테이블값의 전체의
 			ResultSet rs = stmt.executeQuery(sql); // 값을저장해준 모든정보를 결과 객체 rs에 담음
 			if (rs.next()) {
 				// 로그인 된 정보를 객체에 담아 SET 수정 파트에서 사용
-				userDTO.setProbuctNum(rs.getString(1));
+				userDTO.setProductNum(rs.getString(1));
 				userDTO.setProductName(rs.getString(2));
 				userDTO.setPrice(rs.getInt(3));
 				userDTO.setMaker(rs.getString(4));
@@ -145,9 +143,10 @@ public class UserDAO {
 		}
 	}
 
-	public ArrayList<UserDTO> showArray() {
+	public ArrayList<Object[]> showArray() {
 		connect();
-		ArrayList<UserDTO> userlist = new ArrayList<>();
+		ArrayList<Object[]> userlist = new ArrayList<>();
+		
 		try {
 			stmt = conn.createStatement();
 			String sql;
@@ -155,8 +154,15 @@ public class UserDAO {
 			ResultSet rs = stmt.executeQuery(sql); // 값을저장해준 모든정보를 결과 객체 rs에 담음
 
 			while (rs.next()) {
-				UserDTO user = new UserDTO(rs.getString(1), rs.getString(2), rs.getInt(3), rs.getString(4));
-				userlist.add(user);
+//				UserDTO user = new UserDTO(rs.getString(1), rs.getString(2), rs.getInt(3), rs.getString(4));
+//				userlist.add(user);
+				Object[] arr = new Object[4];
+				arr[0] = rs.getString(1);
+				arr[1] = rs.getString(2);
+				arr[2] = rs.getString(3);
+				arr[3] = rs.getString(4);
+			
+				userlist.add(arr);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

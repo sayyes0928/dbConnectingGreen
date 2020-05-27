@@ -1,14 +1,16 @@
 
 public class UserDTO {
-	
 
-	private String probuctNum;
+	private String productNum;
+	private String productName;
+	private int price;
+	private String maker;
 	
-	public String getProbuctNum() {
-		return probuctNum;
+	public String getProductNum() {
+		return productNum;
 	}
-	public void setProbuctNum(String probuctNum) {
-		this.probuctNum = probuctNum;
+	public void setProductNum(String probuctNum) {
+		this.productNum = probuctNum;
 	}
 	public String getProductName() {
 		return productName;
@@ -28,15 +30,8 @@ public class UserDTO {
 	public void setMaker(String maker) {
 		this.maker = maker;
 	}
-	private String productName;
-	private int price;
-	private String maker;
+
 
 	UserDTO(){}
-	public UserDTO(String probuctNum, String productName, int productPrice, String productMaker) {
-		this.probuctNum = probuctNum;
-		this.productName = productName;
-		this.price = productPrice;
-		this.maker = productMaker;
-	}
+	
 }
